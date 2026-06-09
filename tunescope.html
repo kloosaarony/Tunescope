@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tunescope</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0f;--surface:#13131c;--surface2:#1c1c2a;--border:#2a2a3d;
+  --accent:#1db954;--accent2:#ff6b35;--text:#e8e8f0;--muted:#8888aa;
+  --star-on:#f5c842;--star-off:#2a2a40;--nav-h:62px;--top-h:52px;--sidebar-w:210px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar-w);background:rgba(10,10,15,0.97);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:200}
+.sb-logo{padding:20px 18px 14px;border-bottom:1px solid var(--border)}
+.sb-logo-text{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--accent)}
+.sb-logo-text span{color:var(--text)}
+.sb-count{font-size:11px;color:var(--muted);margin-top:2px}
+.sb-nav{flex:1;padding:8px 0;overflow-y:auto}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 18px;color:var(--muted);font-size:13px;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all 0.15s;border-left:3px solid transparent}
+.sb-item .ic{font-size:15px;width:18px;text-align:center}
+.sb-item:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.sb-item.active{color:var(--accent);background:rgba(29,185,84,0.07);border-left-color:var(--accent)}
+.sb-bottom{padding:12px;border-top:1px solid var(--border)}
+.btn-clear{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,80,80,0.25);background:rgba(255,80,80,0.07);color:#ff5050;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer}
+.btn-clear:hover{background:rgba(255,80,80,0.15)}
+
+/* ── CONTENT ── */
+.content{min-height:100vh;padding-left:var(--sidebar-w)}
+.content-inner{max-width:780px;margin:0 auto;padding:28px 24px 60px}
+
+/* ── MOBILE TOP BAR ── */
+.mobile-topbar{display:none;position:sticky;top:0;z-index:150;height:var(--top-h);background:rgba(10,10,15,0.97);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);align-items:center;justify-content:space-between;padding:0 16px}
+.mob-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--accent)}
+.mob-logo span{color:var(--text)}
+.mob-count{font-size:12px;color:var(--muted)}
+
+/* ── MOBILE BOTTOM NAV ── */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:rgba(10,10,15,0.97);border-top:1px solid var(--border);z-index:200;overflow-x:auto}
+.bn-inner{display:flex;height:100%;width:100%}
+.bn-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:transparent;color:var(--muted);font-size:9px;cursor:pointer;padding:5px 2px;min-width:48px}
+.bn-btn .bi{font-size:18px;line-height:1}
+.bn-btn.active{color:var(--accent)}
+
+@media(max-width:700px){
+  .sidebar{display:none}
+  .content{padding-left:0;padding-bottom:var(--nav-h)}
+  .mobile-topbar{display:flex}
+  .bottom-nav{display:flex}
+  .content-inner{padding:14px 12px 80px}
+}
+
+/* ── VIEWS ── */
+.view{display:none}.view.active{display:block}
+
+/* ── IMPORT ── */
+.import-zone{background:var(--surface);border:2px dashed var(--border);border-radius:16px;padding:36px 22px;text-align:center;margin-bottom:14px}
+.import-zone .iz{font-size:38px;margin-bottom:10px;display:block}
+.import-zone h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:6px}
+.import-zone p{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+.file-btn{background:var(--accent);color:#000;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;padding:12px 34px;border-radius:50px;cursor:pointer;border:none;transition:background 0.2s}
+.file-btn:hover,.file-btn:active{background:#1ed760}
+.hint-tag{display:inline-block;margin-top:10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--muted);font-family:monospace}
+.quick-btns{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.btn{padding:9px 16px;border-radius:9px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s}
+.btn-sec{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-sec:hover{border-color:var(--accent);color:var(--accent)}
+.btn-acc{background:var(--accent);color:#000}
+.btn-acc:hover{background:#1ed760}
+.btn-spotify{background:#1db954;color:#000;display:flex;align-items:center;gap:8px}
+.btn-spotify:hover{background:#1ed760}
+
+/* ── SPOTIFY IMPORT ── */
+.sp-playlist-list{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.sp-playlist-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color 0.15s}
+.sp-playlist-item:hover{border-color:var(--accent)}
+.sp-playlist-img{width:44px;height:44px;border-radius:6px;object-fit:cover;flex-shrink:0;background:var(--surface2)}
+.sp-playlist-info{flex:1;min-width:0}
+.sp-playlist-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-playlist-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.sp-status{font-size:12px;color:var(--muted);margin-top:10px;text-align:center;padding:10px}
+
+/* ── ADD SONG ── */
+.add-song-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:18px}
+.add-song-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--accent);margin-bottom:14px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.form-grid{grid-template-columns:1fr}}
+.form-field{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.form-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s;width:100%}
+.form-input:focus{border-color:var(--accent)}
+.form-full{grid-column:1/-1}
+
+/* ── RATE ── */
+.rate-controls{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+.search-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 15px;font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s}
+.search-input:focus{border-color:var(--accent)}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap}
+.filter-sel{background:var(--surface);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:8px 11px;font-family:'DM Sans',sans-serif;font-size:12px;appearance:none;cursor:pointer;flex:1;min-width:110px}
+.subtabs{display:flex;gap:3px;background:var(--surface);border-radius:9px;padding:3px}
+.subtab{flex:1;padding:7px;border-radius:7px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all 0.15s;text-align:center}
+.subtab.active{background:var(--accent);color:#000;font-weight:500}
+
+/* ── SONG CARDS ── */
+.song-list{display:flex;flex-direction:column;gap:3px}
+.song-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:10px 13px;display:flex;align-items:center;gap:9px}
+.song-card:hover{border-color:#3a3a55}
+.song-card.rated{border-color:rgba(245,200,66,0.2)}
+.song-num{font-size:12px;color:var(--muted);font-family:'Bebas Neue',sans-serif;width:24px;text-align:right;flex-shrink:0}
+.song-info{flex:1;min-width:0}
+.song-title{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.song-artist{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.song-year{font-size:10px;color:var(--muted);margin-top:1px;opacity:0.7}
+.song-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.song-delete{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;opacity:0.6}
+.song-delete:hover,.song-delete:active{color:#ff5050;opacity:1}
+
+/* ── PREVIEW BUTTON ── */
+.preview-btn{background:none;border:1px solid var(--border);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:12px;flex-shrink:0;transition:all 0.15s}
+.preview-btn:hover{border-color:var(--accent);color:var(--accent)}
+.preview-btn.playing{border-color:var(--accent);color:var(--accent);background:rgba(29,185,84,0.1)}
+.preview-bar{background:var(--surface2);border-radius:8px;padding:10px 14px;margin-top:4px;display:none;align-items:center;gap:10px}
+.preview-bar.show{display:flex}
+.preview-bar audio{flex:1;height:28px;accent-color:var(--accent)}
+.preview-bar audio::-webkit-media-controls-panel{background:var(--surface2)}
+
+/* ── STARS ── */
+.star-rating{display:flex;gap:2px;align-items:center}
+.star-wrap{width:34px;height:34px;flex-shrink:0;cursor:pointer;touch-action:manipulation;position:relative}
+.star-wrap svg{width:34px;height:34px;display:block}
+.star-wrap .s-bg{fill:var(--star-off)}
+.star-wrap .s-fg{fill:var(--star-on)}
+
+/* ── PAGINATION ── */
+.pagination{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:18px;flex-wrap:wrap}
+.page-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:7px;cursor:pointer;font-size:13px;min-width:36px;text-align:center}
+.page-btn.active{border-color:var(--accent);color:var(--accent);font-weight:500}
+.page-btn:disabled{opacity:0.3;pointer-events:none}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:12px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:14px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent)}
+.stat-label{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.stat-value{font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1;color:var(--accent)}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:16px;margin-bottom:10px}
+.chart-title{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--muted);margin-bottom:13px;text-transform:uppercase}
+.bar-chart{display:flex;flex-direction:column;gap:6px}
+.bar-row{display:flex;align-items:center;gap:8px;cursor:pointer;border-radius:6px;padding:2px 3px;transition:background 0.15s}
+.bar-row:hover{background:rgba(255,255,255,0.04)}
+.bar-row.nc{cursor:default}.bar-row.nc:hover{background:transparent}
+.bar-label{font-size:12px;color:var(--muted);width:90px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;background:var(--surface2);border-radius:4px;height:21px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 7px;font-size:11px;font-weight:500;color:#000;min-width:26px}
+.bar-right{font-size:11px;color:var(--muted);width:34px;text-align:right;flex-shrink:0}
+.dist-wrap{display:flex;align-items:flex-end;gap:3px;height:88px}
+.dist-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;min-width:0;cursor:pointer;border-radius:4px;padding:0 1px;transition:background 0.15s}
+.dist-col:hover{background:rgba(255,255,255,0.05)}
+.dist-bar-wrap{flex:1;width:100%;display:flex;align-items:flex-end}
+.dist-bar{width:100%;background:var(--accent);border-radius:3px 3px 0 0;min-height:3px}
+.dl{font-size:8px;color:var(--muted);text-align:center;white-space:nowrap}
+.dc{font-size:10px;color:var(--text);font-weight:500}
+
+/* ── BANGERS ── */
+.bangers-header{display:flex;gap:6px;margin-bottom:13px;flex-wrap:wrap}
+.banger-filter{padding:6px 13px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.15s}
+.banger-filter.active{background:var(--star-on);color:#000;border-color:var(--star-on);font-weight:500}
+
+/* ── ARTIST CARDS ── */
+.artist-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px 15px;margin-bottom:7px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:border-color 0.15s}
+.artist-card:hover{border-color:#3a3a55}
+.artist-rank{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--muted);width:28px;text-align:right;flex-shrink:0;opacity:0.5}
+.artist-info{flex:1;min-width:0}
+.artist-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.artist-meta{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5}
+.artist-score-box{text-align:right;flex-shrink:0}
+.artist-score-val{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--accent);line-height:1}
+.artist-score-lbl{font-size:10px;color:var(--muted)}
+.gem-badge{display:inline-block;background:rgba(124,111,255,0.15);border:1px solid rgba(124,111,255,0.4);border-radius:20px;padding:2px 8px;font-size:10px;color:#a89fff;margin-top:4px}
+.export-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.collapsible-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.collapsible-header .ch-arrow{font-size:12px;color:var(--muted);transition:transform 0.2s}
+.collapsible-header.open .ch-arrow{transform:rotate(180deg)}
+.collapsible-body{overflow:hidden;max-height:0;transition:max-height 0.3s ease}
+.collapsible-body.open{max-height:9999px}
+
+/* ── RECOMMENDATIONS ── */
+.rec-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin-bottom:7px;display:flex;align-items:center;gap:12px;transition:border-color 0.15s}
+.rec-card:hover{border-color:#3a3a55}
+.rec-img{width:44px;height:44px;border-radius:8px;background:var(--surface2);flex-shrink:0;object-fit:cover}
+.rec-img-placeholder{width:44px;height:44px;border-radius:8px;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+.rec-info{flex:1;min-width:0}
+.rec-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-based{font-size:11px;color:var(--muted);margin-top:3px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0.8}
+.rec-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.rec-save-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:16px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s}
+.rec-save-btn:hover{border-color:var(--accent);color:var(--accent)}
+.rec-save-btn.saved{border-color:var(--accent);color:var(--accent);background:rgba(29,185,84,0.15)}
+.rec-tabs{display:flex;gap:3px;background:var(--surface);border-radius:9px;padding:3px;margin-bottom:14px}
+.rec-tab{flex:1;padding:7px;border-radius:7px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all 0.15s;text-align:center}
+.rec-tab.active{background:var(--accent2);color:#000;font-weight:500}
+.rec-tab.saved-tab.active{background:#7c6fff;color:#fff}
+.rec-loading{text-align:center;padding:40px 20px;color:var(--muted)}
+.rec-loading .spin{display:inline-block;font-size:32px;animation:spin 1s linear infinite;margin-bottom:12px}
+.show-more-btn{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:8px;transition:all 0.15s}
+.show-more-btn:hover{border-color:var(--accent);color:var(--accent)}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ── ANALYTICS ── */
+.taste-section{margin-bottom:16px}
+.taste-title{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:var(--accent);margin-bottom:9px;text-transform:uppercase}
+.taste-pills{display:flex;flex-wrap:wrap;gap:6px}
+.taste-pill{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer;transition:border-color 0.15s}
+.taste-pill:hover{border-color:var(--accent)}
+.tp-label{color:var(--text)}
+.tp-val{color:var(--accent);font-weight:500;font-size:11px}
+.decade-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:7px}
+.decade-card{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px;text-align:center;cursor:pointer;transition:border-color 0.15s}
+.decade-card:hover{border-color:var(--accent)}
+.decade-label{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--text);letter-spacing:1px}
+.decade-count{font-size:11px;color:var(--muted);margin:2px 0}
+.decade-avg{font-size:13px;color:var(--star-on);font-weight:500}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:600px){.modal-overlay{align-items:center}}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:82vh;display:flex;flex-direction:column;overflow:hidden}
+@media(min-width:600px){.modal{border-radius:16px;max-height:76vh}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:15px 17px;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1px;color:var(--text)}
+.modal-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:2px}
+.modal-close:hover{color:var(--text)}
+.modal-body{overflow-y:auto;padding:10px 14px;flex:1}
+.modal-song{display:flex;align-items:center;gap:10px;padding:9px 5px;border-bottom:1px solid var(--border)}
+.modal-song:last-child{border-bottom:none}
+.modal-song-info{flex:1;min-width:0}
+.modal-song-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modal-song-artist{font-size:11px;color:var(--muted)}
+.modal-song-rating{font-size:13px;color:var(--star-on);flex-shrink:0;font-weight:500}
+
+/* ── MISC ── */
+.section-note{font-size:11px;color:var(--muted);margin-bottom:9px;padding:0 2px}
+.empty-state{text-align:center;padding:54px 20px;color:var(--muted)}
+.empty-state .big{font-size:38px;margin-bottom:10px}
+.empty-state h3{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:2px;color:var(--text);margin-bottom:6px}
+.empty-state p{font-size:13px}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--surface2);border:1px solid var(--accent);border-radius:20px;padding:9px 18px;font-size:13px;color:var(--text);z-index:999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+@media(min-width:701px){.toast{bottom:24px}}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-text">Tune<span>scope</span></div>
+    <div class="sb-count" id="sbCount">0 songs</div>
+  </div>
+  <nav class="sb-nav">
+    <button class="sb-item active" onclick="switchView('import')" id="nav-import"><span class="ic">⬆️</span>Import</button>
+    <button class="sb-item" onclick="switchView('add')" id="nav-add"><span class="ic">➕</span>Add Song</button>
+    <button class="sb-item" onclick="switchView('rate')" id="nav-rate"><span class="ic">⭐</span>Rate</button>
+    <button class="sb-item" onclick="switchView('bangers')" id="nav-bangers"><span class="ic">🔥</span>Top Songs</button>
+    <button class="sb-item" onclick="switchView('stats')" id="nav-stats"><span class="ic">📊</span>Stats</button>
+    <button class="sb-item" onclick="switchView('artists')" id="nav-artists"><span class="ic">🎤</span>Artists</button>
+    <button class="sb-item" onclick="switchView('gems')" id="nav-gems"><span class="ic">💎</span>Hidden Gems</button>
+    <button class="sb-item" onclick="switchView('recs')" id="nav-recs"><span class="ic">🔍</span>Discover</button>
+    <button class="sb-item" onclick="switchView('export')" id="nav-export"><span class="ic">💾</span>Export Data</button>
+  </nav>
+  <div class="sb-bottom">
+    <button class="btn-clear" onclick="clearAll()">🗑 Clear All Data</button>
+  </div>
+</aside>
+
+<div class="mobile-topbar">
+  <div class="mob-logo">Tune<span>scope</span></div>
+  <div class="mob-count" id="mobCount">0 songs</div>
+</div>
+
+<div class="content">
+  <div class="content-inner">
+
+    <!-- IMPORT -->
+    <div id="view-import" class="view active">
+      <div class="import-zone">
+        <span class="iz">🎵</span>
+        <h2>Import Playlist</h2>
+        <p>Import from Spotify directly, or pick an Exportify CSV/JSON file. Re-importing adds only new songs.</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="file-btn" style="background:var(--accent2)" onclick="startSpotifyLogin()">🎧 Import from Spotify</button>
+          <button class="file-btn" onclick="document.getElementById('fileInput').click()">📁 Choose File</button>
+        </div>
+        <input type="file" id="fileInput" accept=".csv,.json,text/csv,application/json,text/plain,*/*" onchange="handleFile(event)" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;">
+        <div><div class="hint-tag">CSV or JSON · Exportify format</div></div>
+      </div>
+      <div id="spotifyImportArea" style="display:none;margin-bottom:14px">
+        <div class="chart-card">
+          <div class="chart-title">🎧 Choose a Spotify Playlist</div>
+          <div id="spotifyStatus" class="sp-status">Connecting to Spotify…</div>
+          <div id="spotifyPlaylists" class="sp-playlist-list"></div>
+        </div>
+      </div>
+      <div class="quick-btns">
+        <button class="btn btn-acc" onclick="switchView('add')">➕ Add Song</button>
+        <button class="btn btn-sec" onclick="exportCSV()">⬇ CSV</button>
+        <button class="btn btn-sec" onclick="exportJSON()">⬇ JSON</button>
+        <button class="btn" style="background:rgba(255,80,80,0.1);color:#ff5050;border:1px solid rgba(255,80,80,0.25)" onclick="clearAll()">🗑</button>
+      </div>
+    </div>
+
+    <!-- ADD SONG -->
+    <div id="view-add" class="view">
+      <div class="add-song-card">
+        <div class="add-song-title">➕ Add Song Manually</div>
+        <div class="form-grid">
+          <div class="form-field form-full">
+            <label class="form-label">Track Name *</label>
+            <input class="form-input" id="add-title" placeholder="Song title" type="text">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Artist *</label>
+            <input class="form-input" id="add-artist" placeholder="Artist name" type="text">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Album</label>
+            <input class="form-input" id="add-album" placeholder="Album name" type="text">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Year</label>
+            <input class="form-input" id="add-year" placeholder="e.g. 2023" type="number" min="1900" max="2099">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Genre</label>
+            <input class="form-input" id="add-genre" placeholder="e.g. Pop" type="text">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Length (minutes)</label>
+            <input class="form-input" id="add-duration" placeholder="e.g. 3.5" type="number" min="0" step="0.1">
+          </div>
+          <div class="form-field form-full">
+            <label class="form-label">Rating (optional)</label>
+            <div id="add-star-rating" style="display:flex;gap:2px;margin-top:4px"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button class="btn btn-acc" onclick="submitAddSong()" style="flex:1">Add Song</button>
+          <button class="btn btn-sec" onclick="resetAddForm()">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RATE -->
+    <div id="view-rate" class="view">
+      <div class="rate-controls">
+        <input type="text" class="search-input" id="searchInput" placeholder="🔍  Search songs or artists…" oninput="onSearch()">
+        <div class="filter-row">
+          <select class="filter-sel" id="filterRating" onchange="renderSongList()">
+            <option value="">All ratings</option>
+            <option value="0">Unrated</option>
+            <option value="0.5">½★</option><option value="1">1★</option><option value="1.5">1.5★</option>
+            <option value="2">2★</option><option value="2.5">2.5★</option><option value="3">3★</option>
+            <option value="3.5">3.5★</option><option value="4">4★</option><option value="4.5">4.5★</option>
+            <option value="5">5★</option>
+          </select>
+          <select class="filter-sel" id="sortBy" onchange="renderSongList()">
+            <option value="default">Default</option>
+            <option value="rating-desc">Highest rated</option>
+            <option value="rating-asc">Lowest rated</option>
+            <option value="title">Title A–Z</option>
+            <option value="artist">Artist A–Z</option>
+            <option value="year-desc">Newest first</option>
+            <option value="year-asc">Oldest first</option>
+          </select>
+        </div>
+        <div class="subtabs">
+          <button class="subtab active" id="subtab-all" onclick="setSubtab('all')">All</button>
+          <button class="subtab" id="subtab-rated" onclick="setSubtab('rated')">Rated</button>
+          <button class="subtab" id="subtab-unrated" onclick="setSubtab('unrated')">Unrated</button>
+        </div>
+      </div>
+      <div id="songList" class="song-list"></div>
+      <div id="pagination" class="pagination"></div>
+    </div>
+
+    <!-- BANGERS -->
+    <div id="view-bangers" class="view">
+      <div class="bangers-header">
+        <button class="banger-filter active" id="bf-45" onclick="setBangerFilter(4.5)">4.5★+</button>
+        <button class="banger-filter" id="bf-5" onclick="setBangerFilter(5)">5★ only</button>
+        <button class="banger-filter" id="bf-4" onclick="setBangerFilter(4)">4★+</button>
+      </div>
+      <div id="bangersList"></div>
+    </div>
+
+    <!-- STATS + ANALYTICS -->
+    <div id="view-stats" class="view">
+      <div class="subtabs" style="margin-bottom:14px">
+        <button class="subtab active" id="statsubtab-stats" onclick="setStatsSubtab('stats')">Stats</button>
+        <button class="subtab" id="statsubtab-analytics" onclick="setStatsSubtab('analytics')">Analytics</button>
+      </div>
+      <div id="statsContent"></div>
+      <div id="analyticsContent" style="display:none"></div>
+    </div>
+
+    <!-- ARTISTS -->
+    <div id="view-artists" class="view">
+      <input type="text" class="search-input" id="artistSearch" placeholder="🔍  Search artists…" oninput="onArtistSearch()" style="margin-bottom:12px">
+      <div id="artistsContent"></div>
+    </div>
+
+    <!-- HIDDEN GEMS -->
+    <div id="view-gems" class="view"><div id="gemsContent"></div></div>
+
+    <!-- DISCOVER -->
+    <div id="view-recs" class="view"><div id="recsContent"></div></div>
+
+    <!-- EXPORT -->
+    <div id="view-export" class="view">
+      <div class="chart-card">
+        <div class="chart-title">💾 Export Your Data</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">Download all your songs and ratings. Re-import the CSV to restore data after reinstalling.</p>
+        <div class="export-bar">
+          <button class="btn btn-acc" onclick="exportCSV()">⬇ Download CSV</button>
+          <button class="btn btn-sec" onclick="exportJSON()">⬇ Download JSON</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">Includes: Track Name, Artist, Album, Genres, Release Date, Rating</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="bottom-nav">
+  <div class="bn-inner">
+    <button class="bn-btn active" onclick="switchView('import')" id="bnav-import"><span class="bi">⬆️</span>Import</button>
+    <button class="bn-btn" onclick="switchView('rate')" id="bnav-rate"><span class="bi">⭐</span>Rate</button>
+    <button class="bn-btn" onclick="switchView('bangers')" id="bnav-bangers"><span class="bi">🔥</span>Top</button>
+    <button class="bn-btn" onclick="switchView('stats')" id="bnav-stats"><span class="bi">📊</span>Stats</button>
+    <button class="bn-btn" onclick="switchView('artists')" id="bnav-artists"><span class="bi">🎤</span>Artists</button>
+    <button class="bn-btn" onclick="switchView('gems')" id="bnav-gems"><span class="bi">💎</span>Gems</button>
+    <button class="bn-btn" onclick="switchView('recs')" id="bnav-recs"><span class="bi">🔍</span>Discover</button>
+  </div>
+</nav>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" style="display:none" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle"></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let songs = [], ratings = {};
+let currentPage = 1, currentSubtab = 'all', bangerFilter = 4.5;
+let addRating = 0;
+let oneHitWonders = [];
+const PAGE_SIZE = 50;
+let searchTimer;
+let currentAudio = null;
+let currentPreviewId = null;
+
+// Spotify tokens
+let spotifyToken = null;
+let spotifyRefreshToken = null;
+
+// Rec state
+let recTab = 'artists';
+let recSavedItems = { artists: {}, tracks: {} };
+let recAllArtists = [], recAllTracks = [];
+let recArtistPage = 0, recTrackPage = 0;
+const REC_PAGE_SIZE = 15;
+
+const SPOTIFY_CLIENT_ID = 'dbd0cea91c404e3cb72013b6962682a9';
+const SPOTIFY_CLIENT_SECRET = 'd7294595dbda4f6e9fd569041bd94745';
+const LASTFM_KEY = '28b6a6c8f246e2df92e0063a5b8a8dce';
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+const DB_NAME = 'tunescope', DB_VER = 1, STORE = 'kv';
+let db = null;
+function openDB() {
+  return new Promise((res,rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(STORE);
+    req.onsuccess = e => { db = e.target.result; res(db); };
+    req.onerror = () => rej();
+  });
+}
+function dbSet(key, val) {
+  return new Promise(res => { const tx = db.transaction(STORE,'readwrite'); tx.objectStore(STORE).put(val, key); tx.oncomplete = res; });
+}
+function dbGet(key) {
+  return new Promise(res => { const tx = db.transaction(STORE,'readonly'); const r = tx.objectStore(STORE).get(key); r.onsuccess = () => res(r.result); r.onerror = () => res(null); });
+}
+async function save() {
+  if (db) { await dbSet('songs', songs); await dbSet('ratings', ratings); await dbSet('recSaved', recSavedItems); }
+  try { localStorage.setItem('ts5_songs', JSON.stringify(songs)); localStorage.setItem('ts5_ratings', JSON.stringify(ratings)); localStorage.setItem('ts5_recSaved', JSON.stringify(recSavedItems)); } catch(e) {}
+}
+async function initStorage() {
+  try {
+    await openDB();
+    const s = await dbGet('songs'), r = await dbGet('ratings'), rs = await dbGet('recSaved');
+    if (s && s.length) songs = s; else { const ls = localStorage.getItem('ts5_songs'); if (ls) songs = JSON.parse(ls); }
+    if (r && Object.keys(r).length) ratings = r; else { const lr = localStorage.getItem('ts5_ratings'); if (lr) ratings = JSON.parse(lr); }
+    if (rs) recSavedItems = rs; else { const lrs = localStorage.getItem('ts5_recSaved'); if (lrs) recSavedItems = JSON.parse(lrs); }
+  } catch(e) {
+    try { const ls = localStorage.getItem('ts5_songs'), lr = localStorage.getItem('ts5_ratings'); if (ls) songs = JSON.parse(ls); if (lr) ratings = JSON.parse(lr); } catch(e2) {}
+  }
+  updateSongCount(); renderSongList(); buildAddStars();
+}
+
+// ─── SPOTIFY AUTH (Client Credentials for playlist import) ──────────────────
+async function getSpotifyToken() {
+  if (spotifyToken) return spotifyToken;
+  const resp = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': 'Basic ' + btoa(SPOTIFY_CLIENT_ID + ':' + SPOTIFY_CLIENT_SECRET) },
+    body: 'grant_type=client_credentials'
+  });
+  const data = await resp.json();
+  spotifyToken = data.access_token;
+  setTimeout(() => { spotifyToken = null; }, (data.expires_in - 60) * 1000);
+  return spotifyToken;
+}
+
+// For user playlists we need OAuth — use implicit flow via popup
+function startSpotifyLogin() {
+  const area = document.getElementById('spotifyImportArea');
+  area.style.display = 'block';
+  const status = document.getElementById('spotifyStatus');
+
+  // Build OAuth URL
+  const redirectUri = encodeURIComponent(window.location.href.split('?')[0].split('#')[0]);
+  const scopes = encodeURIComponent('playlist-read-private playlist-read-collaborative');
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem('sp_state', state);
+
+  const authUrl = 'https://accounts.spotify.com/authorize?response_type=token' +
+    '&client_id=' + SPOTIFY_CLIENT_ID +
+    '&scope=' + scopes +
+    '&redirect_uri=' + redirectUri +
+    '&state=' + state;
+
+  // Try popup first
+  const popup = window.open(authUrl, 'spotify_auth', 'width=500,height=700');
+  if (!popup) {
+    // Redirect fallback (APK)
+    status.textContent = 'Redirecting to Spotify login…';
+    sessionStorage.setItem('sp_return', 'true');
+    window.location.href = authUrl;
+    return;
+  }
+
+  status.textContent = 'Complete login in the popup…';
+
+  // Poll popup for redirect back with token
+  const poll = setInterval(() => {
+    try {
+      if (popup.closed) { clearInterval(poll); status.textContent = 'Login cancelled.'; return; }
+      const hash = popup.location.hash;
+      if (hash && hash.includes('access_token')) {
+        clearInterval(poll);
+        popup.close();
+        const params = new URLSearchParams(hash.slice(1));
+        spotifyToken = params.get('access_token');
+        loadSpotifyPlaylists();
+      }
+    } catch(e) {}
+  }, 500);
+}
+
+// Check if we're returning from Spotify redirect (APK flow)
+function checkSpotifyReturn() {
+  const hash = window.location.hash;
+  if (hash && hash.includes('access_token') && sessionStorage.getItem('sp_return')) {
+    sessionStorage.removeItem('sp_return');
+    const params = new URLSearchParams(hash.slice(1));
+    spotifyToken = params.get('access_token');
+    window.location.hash = '';
+    const area = document.getElementById('spotifyImportArea');
+    area.style.display = 'block';
+    loadSpotifyPlaylists();
+  }
+}
+
+async function loadSpotifyPlaylists() {
+  const status = document.getElementById('spotifyStatus');
+  const list = document.getElementById('spotifyPlaylists');
+  status.textContent = 'Loading your playlists…';
+  try {
+    const resp = await fetch('https://api.spotify.com/v1/me/playlists?limit=50', { headers: { Authorization: 'Bearer ' + spotifyToken } });
+    const data = await resp.json();
+    if (data.error) { status.textContent = 'Error: ' + data.error.message; return; }
+    status.textContent = data.items.length + ' playlists found. Tap one to import.';
+    list.innerHTML = data.items.map(p => {
+      const img = p.images?.[0]?.url || '';
+      return '<div class="sp-playlist-item" onclick="importSpotifyPlaylist(\'' + p.id + '\',\'' + esc(p.name) + '\')">' +
+        (img ? '<img class="sp-playlist-img" src="' + img + '">' : '<div class="sp-playlist-img"></div>') +
+        '<div class="sp-playlist-info"><div class="sp-playlist-name">' + esc(p.name) + '</div>' +
+        '<div class="sp-playlist-meta">' + (p.tracks?.total || 0) + ' tracks</div></div></div>';
+    }).join('');
+  } catch(e) { status.textContent = 'Failed to load playlists. Try again.'; }
+}
+
+async function importSpotifyPlaylist(playlistId, name) {
+  const status = document.getElementById('spotifyStatus');
+  status.textContent = 'Importing "' + name + '"…';
+  document.getElementById('spotifyPlaylists').innerHTML = '';
+  try {
+    let url = 'https://api.spotify.com/v1/playlists/' + playlistId + '/tracks?limit=100&fields=next,items(track(id,name,artists,album,duration_ms,preview_url))';
+    let allTracks = [];
+    while (url) {
+      const resp = await fetch(url, { headers: { Authorization: 'Bearer ' + spotifyToken } });
+      const data = await resp.json();
+      allTracks = allTracks.concat(data.items || []);
+      url = data.next || null;
+    }
+    const existingKeys = new Set(songs.map(s => dkey(s)));
+    let added = 0;
+    allTracks.forEach((item, i) => {
+      const t = item.track;
+      if (!t || !t.name) return;
+      const artist = primaryArtist(t.artists?.[0]?.name || '');
+      const song = {
+        id: Date.now() + '_' + Math.random().toString(36).slice(2),
+        title: t.name, artist,
+        album: t.album?.name || '',
+        genre: '', year: null,
+        durMs: t.duration_ms || 0,
+        previewUrl: t.preview_url || '',
+        spotifyId: t.id || ''
+      };
+      const key = dkey(song);
+      if (existingKeys.has(key)) return;
+      existingKeys.add(key);
+      songs.push(song);
+      added++;
+    });
+    save(); updateSongCount();
+    status.textContent = '✓ Added ' + added + ' songs from "' + name + '"';
+    showToast('✓ Added ' + added + ' songs');
+    setTimeout(() => { document.getElementById('spotifyImportArea').style.display = 'none'; switchView('rate'); }, 1500);
+  } catch(e) { status.textContent = 'Import failed: ' + e.message; }
+}
+
+// ─── FILE HANDLING ────────────────────────────────────────────────────────────
+function handleFile(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = evt => file.name.toLowerCase().endsWith('.json') ? parseJSON(evt.target.result) : parseCSV(evt.target.result);
+  reader.readAsText(file); e.target.value = '';
+}
+function parseCSV(text) {
+  text = text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return showToast('File seems empty');
+  const headers = parseCSVLine(lines[0]).map(h=>h.trim());
+  const rows = [];
+  for (let i=1;i<lines.length;i++){const l=lines[i].trim();if(!l)continue;const v=parseCSVLine(l),o={};headers.forEach((h,j)=>{o[h]=(v[j]||'').trim();});rows.push(o);}
+  if (!rows.length) return showToast('No rows found');
+  importRows(headers, rows);
+}
+function parseCSVLine(line) {
+  const r=[];let inQ=false,val='';
+  for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){if(inQ&&line[i+1]==='"'){val+='"';i++;}else inQ=!inQ;}else if(c===','&&!inQ){r.push(val);val='';}else val+=c;}
+  r.push(val);return r;
+}
+function parseJSON(text) {
+  try{const d=JSON.parse(text),arr=Array.isArray(d)?d:(d.tracks||d.items||[]);if(!arr.length)return showToast('No tracks found');importRows(Object.keys(arr[0]),arr);}catch(e){showToast('Could not parse JSON');}
+}
+function importRows(headers, rows) {
+  const AL={title:['Track Name','title','name','song'],artist:['Artist Name(s)','Artist Name','artist','artists'],album:['Album Name','album'],genre:['Genres','genre'],year:['Release Date','release_date','year','date'],existRating:['Rating','rating','My Rating','my_rating','Score','score'],duration:['Duration (ms)','duration_ms','duration','length_ms']};
+  const map={};
+  for(const[f,aliases]of Object.entries(AL)){for(const a of aliases){if(headers.includes(a)){map[f]=a;break;}}if(!map[f]){const found=headers.find(h=>aliases.some(a=>h.toLowerCase()===a.toLowerCase()));if(found)map[f]=found;}}
+  if(!map.title)return showToast('Could not find Track Name column');
+  if(!map.artist)return showToast('Could not find Artist column');
+  const existKeys=new Set(songs.map(s=>dkey(s)));
+  const newSongs=[];let importedR=0;
+  rows.forEach(row=>{
+    const title=(row[map.title]||'').trim(),artist=(row[map.artist]||'').trim();
+    if(!title||title.startsWith('spotify:'))return;
+    const year=parseYear(map.year?row[map.year]:'');
+    const durMs=map.duration?parseInt(row[map.duration]||'0')||0:0;
+    const song={id:Date.now()+'_'+Math.random().toString(36).slice(2),title,artist:primaryArtist(artist),album:map.album?(row[map.album]||'').trim():'',genre:map.genre?(row[map.genre]||'').trim():'',year,durMs,previewUrl:'',spotifyId:''};
+    const key=dkey(song);
+    if(existKeys.has(key)){
+      const ex=songs.find(s=>dkey(s)===key);
+      if(ex){if(durMs>0&&(!ex.durMs||ex.durMs===0))ex.durMs=durMs;if(map.existRating&&!ratings[ex.id]){const r=parseImportedRating(row[map.existRating]);if(r>0){ratings[ex.id]=r;importedR++;}}}
+      return;
+    }
+    existKeys.add(key);
+    if(map.existRating){const r=parseImportedRating(row[map.existRating]);if(r>0){ratings[song.id]=r;importedR++;}}
+    newSongs.push(song);
+  });
+  songs=[...songs,...newSongs];save();updateSongCount();
+  showToast(newSongs.length?'✓ Added '+newSongs.length+' songs'+(importedR?', '+importedR+' ratings':''):(importedR?'✓ '+importedR+' ratings imported':'No new songs'));
+  switchView('rate');
+}
+function parseYear(raw){if(!raw)return null;const m=String(raw).match(/(\d{4})/);return m?parseInt(m[1]):null;}
+function parseImportedRating(val){if(!val)return 0;const n=parseFloat(String(val).trim());if(isNaN(n)||n<=0)return 0;if(n>5)return Math.min(5,Math.round(n/2*2)/2);return Math.min(5,Math.round(n*2)/2);}
+function dkey(s){return(s.title+'|||'+s.artist).toLowerCase().trim();}
+function primaryArtist(a){return(a||'Unknown').split(/[;,]/)[0].trim();}
+
+// ─── ADD SONG ─────────────────────────────────────────────────────────────────
+function buildAddStars() {
+  const con = document.getElementById('add-star-rating'); if (!con) return;
+  con.innerHTML = '';
+  for (let n = 1; n <= 5; n++) {
+    const cid = 'addstar_' + n;
+    const fill = addRating >= n ? 'full' : addRating >= n - 0.5 ? 'half' : 'none';
+    const path = 'M18 5 l3.09 6.26 6.91 1-5 4.87 1.18 6.87L18 21l-6.18 3-1.18-6.87L5.5 13.13l6.91-1z';
+    const wrap = document.createElement('div');
+    wrap.className = 'star-wrap';
+    wrap.innerHTML = '<svg viewBox="0 0 36 36"><defs><clipPath id="'+cid+'h"><rect x="0" y="0" width="18" height="36"/></clipPath><clipPath id="'+cid+'f"><rect x="0" y="0" width="36" height="36"/></clipPath></defs><path d="'+path+'" class="s-bg"/>'+(fill==='full'?'<path d="'+path+'" class="s-fg" clip-path="url(#'+cid+'f)"/>':'')+(fill==='half'?'<path d="'+path+'" class="s-fg" clip-path="url(#'+cid+'h)"/>':'')+'</svg>';
+    wrap.addEventListener('click', e => { const r = e.currentTarget.getBoundingClientRect(); const val = (e.clientX - r.left) < r.width/2 ? n-0.5 : n; addRating = addRating===val?0:val; buildAddStars(); });
+    wrap.addEventListener('touchstart', e => { e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); const val = (e.touches[0].clientX - r.left) < r.width/2 ? n-0.5 : n; addRating = addRating===val?0:val; buildAddStars(); }, {passive:false});
+    con.appendChild(wrap);
+  }
+}
+function submitAddSong() {
+  const title=document.getElementById('add-title').value.trim(),artist=document.getElementById('add-artist').value.trim();
+  if(!title||!artist)return showToast('Title and Artist are required');
+  const year=parseInt(document.getElementById('add-year').value)||null;
+  const durMin=parseFloat(document.getElementById('add-duration').value)||0;
+  const song={id:Date.now()+'_'+Math.random().toString(36).slice(2),title,artist:primaryArtist(artist),album:document.getElementById('add-album').value.trim(),genre:document.getElementById('add-genre').value.trim(),year,durMs:Math.round(durMin*60000),previewUrl:'',spotifyId:''};
+  if(songs.some(s=>dkey(s)===dkey(song)))return showToast('Song already exists');
+  songs.push(song);
+  if(addRating>0)ratings[song.id]=addRating;
+  save();updateSongCount();showToast('✓ Added "'+title+'"');resetAddForm();
+}
+function resetAddForm(){['add-title','add-artist','add-album','add-year','add-genre','add-duration'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});addRating=0;buildAddStars();}
+
+// ─── STARS ───────────────────────────────────────────────────────────────────
+function starHTML(id) {
+  const r = ratings[id] || 0;
+  const path = 'M18 5 l3.09 6.26 6.91 1-5 4.87 1.18 6.87L18 21l-6.18 3-1.18-6.87L5.5 13.13l6.91-1z';
+  let html = '<div class="star-rating">';
+  for (let n = 1; n <= 5; n++) {
+    const fill = r >= n ? 'full' : r >= n-0.5 ? 'half' : 'none';
+    const cid = 'c' + id.replace(/[^a-z0-9]/gi,'').slice(-8) + '_' + n;
+    html += '<div class="star-wrap" data-id="'+id+'" data-n="'+n+'" ontouchstart="onStarTouch(event)" onclick="onStarClick(event)">';
+    html += '<svg viewBox="0 0 36 36"><defs>';
+    html += '<clipPath id="'+cid+'h"><rect x="0" y="0" width="18" height="36"/></clipPath>';
+    html += '<clipPath id="'+cid+'f"><rect x="0" y="0" width="36" height="36"/></clipPath>';
+    html += '</defs><path d="'+path+'" class="s-bg"/>';
+    if(fill==='full') html += '<path d="'+path+'" class="s-fg" clip-path="url(#'+cid+'f)"/>';
+    if(fill==='half') html += '<path d="'+path+'" class="s-fg" clip-path="url(#'+cid+'h)"/>';
+    html += '</svg></div>';
+  }
+  return html + '</div>';
+}
+function onStarTouch(e){e.preventDefault();const w=e.currentTarget,r=w.getBoundingClientRect();applyRating(w.dataset.id,parseInt(w.dataset.n),(e.touches[0].clientX-r.left)<r.width/2);}
+function onStarClick(e){const w=e.currentTarget,r=w.getBoundingClientRect();applyRating(w.dataset.id,parseInt(w.dataset.n),(e.clientX-r.left)<r.width/2);}
+function applyRating(id,n,isHalf){
+  const val=isHalf?n-0.5:n;
+  ratings[id]=ratings[id]===val?0:val;save();
+  const card=document.querySelector('.song-card[data-id="'+id+'"]');
+  if(card){const sr=card.querySelector('.star-rating');if(sr)sr.outerHTML=starHTML(id);const c2=document.querySelector('.song-card[data-id="'+id+'"]');if(c2)c2.classList.toggle('rated',ratings[id]>0);}
+}
+
+// ─── PREVIEW ─────────────────────────────────────────────────────────────────
+function togglePreview(id, previewUrl) {
+  // Stop existing
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  const prevBtn = document.querySelector('.preview-btn[data-pid="'+currentPreviewId+'"]');
+  const prevBar = document.querySelector('.preview-bar[data-pid="'+currentPreviewId+'"]');
+  if (prevBtn) prevBtn.classList.remove('playing');
+  if (prevBar) prevBar.classList.remove('show');
+
+  if (currentPreviewId === id) { currentPreviewId = null; return; }
+  if (!previewUrl) { showToast('No preview available for this song'); return; }
+
+  currentPreviewId = id;
+  const btn = document.querySelector('.preview-btn[data-pid="'+id+'"]');
+  const bar = document.querySelector('.preview-bar[data-pid="'+id+'"]');
+  if (btn) btn.classList.add('playing');
+  if (bar) {
+    bar.classList.add('show');
+    bar.querySelector('audio').src = previewUrl;
+    bar.querySelector('audio').play().catch(()=>{});
+    currentAudio = bar.querySelector('audio');
+    currentAudio.onended = () => { btn.classList.remove('playing'); bar.classList.remove('show'); currentPreviewId = null; currentAudio = null; };
+  }
+}
+
+// ─── RATE VIEW ───────────────────────────────────────────────────────────────
+function onSearch(){clearTimeout(searchTimer);searchTimer=setTimeout(()=>{currentPage=1;renderSongList();},200);}
+function setSubtab(t){currentSubtab=t;['all','rated','unrated'].forEach(x=>document.getElementById('subtab-'+x).classList.toggle('active',x===t));currentPage=1;renderSongList();}
+function getFiltered(){
+  const q=(document.getElementById('searchInput')?.value||'').toLowerCase();
+  const rf=document.getElementById('filterRating')?.value??'';
+  const sort=document.getElementById('sortBy')?.value||'default';
+  let list=songs.filter(s=>{
+    const r=ratings[s.id]||0;
+    const mQ=!q||s.title.toLowerCase().includes(q)||s.artist.toLowerCase().includes(q);
+    const mR=rf===''?true:rf==='0'?r===0:r===parseFloat(rf);
+    const mT=currentSubtab==='rated'?r>0:currentSubtab==='unrated'?r===0:true;
+    return mQ&&mR&&mT;
+  });
+  if(sort==='rating-desc')list.sort((a,b)=>(ratings[b.id]||0)-(ratings[a.id]||0));
+  else if(sort==='rating-asc')list.sort((a,b)=>(ratings[a.id]||0)-(ratings[b.id]||0));
+  else if(sort==='title')list.sort((a,b)=>a.title.localeCompare(b.title));
+  else if(sort==='artist')list.sort((a,b)=>a.artist.localeCompare(b.artist));
+  else if(sort==='year-desc')list.sort((a,b)=>(b.year||0)-(a.year||0));
+  else if(sort==='year-asc')list.sort((a,b)=>(a.year||0)-(b.year||0));
+  return list;
+}
+function renderSongList(){
+  const con=document.getElementById('songList'),pag=document.getElementById('pagination');
+  if(!songs.length){con.innerHTML='<div class="empty-state"><div class="big">🎵</div><h3>No songs yet</h3><p>Import a playlist or add songs manually.</p></div>';pag.innerHTML='';return;}
+  const list=getFiltered();
+  if(!list.length){con.innerHTML='<div class="empty-state"><div class="big">🔍</div><h3>No matches</h3></div>';pag.innerHTML='';return;}
+  const total=Math.ceil(list.length/PAGE_SIZE);
+  if(currentPage>total)currentPage=1;
+  const page=list.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
+  con.innerHTML=page.map((s,i)=>{
+    const r=ratings[s.id]||0,idx=(currentPage-1)*PAGE_SIZE+i+1;
+    const hasPreview = !!s.previewUrl;
+    return '<div class="song-card '+(r>0?'rated':'')+'" data-id="'+s.id+'">' +
+      '<span class="song-num">'+idx+'</span>' +
+      '<div class="song-info">' +
+        '<div class="song-title">'+esc(s.title)+'</div>' +
+        '<div class="song-artist">'+esc(s.artist)+(s.album?' · '+esc(s.album):'')+'</div>' +
+        (s.year?'<div class="song-year">'+s.year+'</div>':'') +
+      '</div>' +
+      '<div class="song-right">' +
+        starHTML(s.id) +
+        '<div style="display:flex;gap:4px;align-items:center">' +
+          (hasPreview?'<button class="preview-btn" data-pid="'+s.id+'" onclick="togglePreview(\''+s.id+'\',\''+s.previewUrl+'\')">▶</button>':'') +
+          '<button class="song-delete" onclick="deleteSong(\''+s.id+'\')">✕</button>' +
+        '</div>' +
+      '</div>' +
+      '</div>' +
+      (hasPreview?'<div class="preview-bar" data-pid="'+s.id+'"><audio controls preload="none"></audio></div>':'');
+  }).join('');
+  if(total<=1){pag.innerHTML='';return;}
+  let h='<button class="page-btn" onclick="goPage('+(currentPage-1)+')" '+(currentPage===1?'disabled':'')+'>‹</button>';
+  for(let p=1;p<=total;p++){if(total>7&&Math.abs(p-currentPage)>2&&p!==1&&p!==total){if(p===2||p===total-1)h+='<span style="color:var(--muted);padding:0 3px">…</span>';continue;}h+='<button class="page-btn '+(p===currentPage?'active':'')+'" onclick="goPage('+p+')">'+p+'</button>';}
+  h+='<button class="page-btn" onclick="goPage('+(currentPage+1)+')" '+(currentPage===total?'disabled':'')+'>›</button>';
+  pag.innerHTML=h;
+}
+function goPage(p){currentPage=p;renderSongList();window.scrollTo(0,0);}
+function deleteSong(id){songs=songs.filter(s=>s.id!==id);delete ratings[id];save();updateSongCount();renderSongList();}
+
+// ─── BANGERS ─────────────────────────────────────────────────────────────────
+function setBangerFilter(v){bangerFilter=v;const map={4.5:'bf-45',5:'bf-5',4:'bf-4'};document.querySelectorAll('.banger-filter').forEach(b=>b.classList.remove('active'));document.getElementById(map[v])?.classList.add('active');renderBangers();}
+function renderBangers(){
+  const con=document.getElementById('bangersList');
+  const list=songs.filter(s=>(ratings[s.id]||0)>=bangerFilter).sort((a,b)=>(ratings[b.id]||0)-(ratings[a.id]||0));
+  if(!list.length){con.innerHTML='<div class="empty-state"><div class="big">🔥</div><h3>None yet</h3><p>Rate songs '+bangerFilter+'★+ to see them here.</p></div>';return;}
+  con.innerHTML=list.map((s,i)=>'<div class="song-card rated" style="margin-bottom:3px"><span class="song-num">'+(i+1)+'</span><div class="song-info"><div class="song-title">'+esc(s.title)+'</div><div class="song-artist">'+esc(s.artist)+(s.year?' · '+s.year:'')+'</div></div><span style="font-size:14px;color:var(--star-on);font-weight:500;flex-shrink:0">'+(ratings[s.id])+'★</span></div>').join('');
+}
+
+// ─── WEIGHTED SCORE ───────────────────────────────────────────────────────────
+function songPts(r){return r===5?4:r===4.5?2:r===4?1:0;}
+function artistScore(ss){const rated=ss.filter(s=>ratings[s.id]>0);if(!rated.length)return 0;const avg=rated.reduce((a,s)=>a+songPts(ratings[s.id]),0)/rated.length;return Math.round(avg*rated.length*10)/10;}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(title,songArr){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalBody').innerHTML=songArr.length
+    ?songArr.map(s=>'<div class="modal-song"><div class="modal-song-info"><div class="modal-song-title">'+esc(s.title)+'</div><div class="modal-song-artist">'+esc(s.artist)+(s.year?' · '+s.year:'')+'</div></div><span class="modal-song-rating">'+(ratings[s.id]?ratings[s.id]+'★':'—')+'</span></div>').join('')
+    :'<div style="color:var(--muted);font-size:13px;padding:20px;text-align:center">No songs</div>';
+  document.getElementById('modalOverlay').style.display='flex';
+}
+function closeModal(e){if(!e||e.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').style.display='none';}
+function modalSongs(ids){return ids.map(id=>songs.find(s=>s.id===id)).filter(Boolean).sort((a,b)=>(ratings[b.id]||0)-(ratings[a.id]||0));}
+
+// ─── STATS ───────────────────────────────────────────────────────────────────
+function renderStats(){
+  const con=document.getElementById('statsContent');
+  const rated=songs.filter(s=>ratings[s.id]>0);
+  if(!songs.length){con.innerHTML='<div class="empty-state"><div class="big">📊</div><h3>No Data</h3><p>Import and rate songs first.</p></div>';return;}
+  const avg=rated.length?(rated.reduce((a,s)=>a+(ratings[s.id]||0),0)/rated.length).toFixed(2):'—';
+  const pct=Math.round(rated.length/songs.length*100);
+  const rFreq={};rated.forEach(s=>{const r=ratings[s.id];rFreq[r]=(rFreq[r]||0)+1;});
+  const mostCommon=Object.entries(rFreq).sort((a,b)=>b[1]-a[1])[0];
+  const buckets={};[0.5,1,1.5,2,2.5,3,3.5,4,4.5,5].forEach(v=>buckets[v]=0);
+  rated.forEach(s=>{const r=ratings[s.id];if(buckets[r]!==undefined)buckets[r]++;});
+  const maxB=Math.max(...Object.values(buckets),1);
+  const songsWithDur=songs.filter(s=>s.durMs&&s.durMs>0);
+  const totalDurMs=songsWithDur.reduce((a,s)=>a+(s.durMs||0),0);
+  const avgDurMin=songsWithDur.length?totalDurMs/songsWithDur.length/60000:0;
+  function fmtMin(m){const mins=Math.floor(m),secs=Math.round((m-mins)*60);return mins+':'+(secs<10?'0':'')+secs;}
+  const avgDurFmt=avgDurMin>0?fmtMin(avgDurMin):null;
+  const totalDurHours=totalDurMs>0?(totalDurMs/3600000).toFixed(1):null;
+  const totalDays=totalDurMs>0?(totalDurMs/86400000).toFixed(2):null;
+  const totalDurFmt=totalDurMs>0?totalDurHours+'h ('+totalDays+' days)':null;
+  const ratedWithYear=rated.filter(s=>s.year);
+  const oldestSong=ratedWithYear.length?ratedWithYear.reduce((a,b)=>a.year<b.year?a:b):null;
+  const newestSong=ratedWithYear.length?ratedWithYear.reduce((a,b)=>a.year>b.year?a:b):null;
+  const aMap2={};songs.forEach(s=>{const a=primaryArtist(s.artist||'?');if(!aMap2[a])aMap2[a]=[];aMap2[a].push(s);});
+  oneHitWonders=Object.entries(aMap2).filter(([,ss])=>ss.length===1&&(ratings[ss[0].id]||0)>=4.5).map(([name,ss])=>({name,song:ss[0],rating:ratings[ss[0].id]||0})).sort((a,b)=>b.rating-a.rating);
+  const aData={};songs.forEach(s=>{const a=primaryArtist(s.artist||'?');if(!aData[a])aData[a]={total:0,rated:0,sum:0};aData[a].total++;if(ratings[s.id]>0){aData[a].rated++;aData[a].sum+=ratings[s.id];}});
+  const mostRated=Object.entries(aData).sort((a,b)=>b[1].rated-a[1].rated)[0];
+  const highestAvg=Object.entries(aData).filter(([,v])=>v.rated>=3).sort((a,b)=>(b[1].sum/b[1].rated)-(a[1].sum/a[1].rated))[0];
+  const lowestAvg=Object.entries(aData).filter(([,v])=>v.rated>=3).sort((a,b)=>(a[1].sum/a[1].rated)-(b[1].sum/b[1].rated))[0];
+  const genreData={};
+  rated.forEach(s=>{(s.genre||'').split(/[,;]/).map(x=>x.trim()).filter(Boolean).forEach(g=>{if(!genreData[g])genreData[g]={sum:0,count:0,ids:[]};genreData[g].sum+=ratings[s.id];genreData[g].count++;genreData[g].ids.push(s.id);});});
+  const allGenres=Object.entries(genreData).map(([g,d])=>({g,avg:d.sum/d.count,count:d.count,ids:d.ids})).sort((a,b)=>b.count-a.count);
+  const maxGC=allGenres[0]?.count||1;
+  const yearData={};
+  rated.forEach(s=>{if(!s.year)return;if(!yearData[s.year])yearData[s.year]={sum:0,count:0,ids:[]};yearData[s.year].sum+=ratings[s.id];yearData[s.year].count++;yearData[s.year].ids.push(s.id);});
+  const allYears=Object.entries(yearData).map(([y,d])=>({y:parseInt(y),avg:d.sum/d.count,count:d.count,ids:d.ids})).sort((a,b)=>b.count-a.count);
+  const maxYC=allYears[0]?.count||1;
+
+  con.innerHTML=`
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Total Songs</div><div class="stat-value">${songs.length}</div><div class="stat-sub">${pct}% rated</div></div>
+      <div class="stat-card"><div class="stat-label">Rated Songs</div><div class="stat-value" style="color:var(--accent)">${rated.length}</div><div class="stat-sub">of ${songs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Rated Artists</div><div class="stat-value" style="color:#7c6fff">${Object.values(aData).filter(v=>v.rated>0).length}</div><div class="stat-sub">artists</div></div>
+      <div class="stat-card"><div class="stat-label">Avg Rating</div><div class="stat-value" style="color:var(--star-on)">${avg}</div><div class="stat-sub">out of 5</div></div>
+      <div class="stat-card"><div class="stat-label">Most Common</div><div class="stat-value" style="color:var(--accent2)">${mostCommon?mostCommon[0]+'★':'—'}</div><div class="stat-sub">${mostCommon?mostCommon[1]+' songs':''}</div></div>
+      <div class="stat-card"><div class="stat-label">4.5–5★</div><div class="stat-value" style="color:#ff6b35">${songs.filter(s=>(ratings[s.id]||0)>=4.5).length}</div><div class="stat-sub">bangers</div></div>
+      ${avgDurFmt?`<div class="stat-card"><div class="stat-label">Avg Length</div><div class="stat-value" style="color:var(--accent);font-size:22px">${avgDurFmt}</div><div class="stat-sub">avg across ${songsWithDur.length} songs</div></div>`:''}
+      ${totalDurFmt?`<div class="stat-card" style="grid-column:span 2"><div class="stat-label">Total Runtime</div><div class="stat-value" style="color:var(--accent);font-size:18px">${totalDurFmt}</div><div class="stat-sub">${totalDurHours} hours · ${totalDays} days</div></div>`:''}
+      ${oldestSong?`<div class="stat-card" style="cursor:pointer" onclick='openModal("Oldest Rated",modalSongs(["${oldestSong.id}"]))'>
+        <div class="stat-label">Oldest Rated</div><div class="stat-value" style="color:var(--muted);font-size:22px">${oldestSong.year}</div>
+        <div class="stat-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(oldestSong.title)}</div>
+        <div class="stat-sub">${esc(oldestSong.artist)} · ${ratings[oldestSong.id]}★</div></div>`:''}
+      ${newestSong?`<div class="stat-card" style="cursor:pointer" onclick='openModal("Newest Rated",modalSongs(["${newestSong.id}"]))'>
+        <div class="stat-label">Newest Rated</div><div class="stat-value" style="color:var(--muted);font-size:22px">${newestSong.year}</div>
+        <div class="stat-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(newestSong.title)}</div>
+        <div class="stat-sub">${esc(newestSong.artist)} · ${ratings[newestSong.id]}★</div></div>`:''}
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Rating Distribution — tap to see songs</div>
+      <div class="dist-wrap">
+        ${[0.5,1,1.5,2,2.5,3,3.5,4,4.5,5].map((v,i)=>{
+          const ids=rated.filter(s=>ratings[s.id]===v).map(s=>s.id);
+          return `<div class="dist-col" onclick='openModal("${v}★ Songs",modalSongs(${JSON.stringify(ids)}))'>
+            <div class="dc">${buckets[v]||0}</div>
+            <div class="dist-bar-wrap"><div class="dist-bar" style="height:${Math.max(3,Math.round((buckets[v]||0)/maxB*100))}%;opacity:${0.4+i*0.063}"></div></div>
+            <div class="dl">${v}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    ${mostRated||highestAvg||lowestAvg?`
+    <div class="chart-card">
+      <div class="chart-title">Artist Highlights</div>
+      <div class="bar-chart">
+        ${mostRated?`<div class="bar-row nc"><span class="bar-label" style="color:var(--text)">Most Rated</span><span style="flex:1;font-size:13px;font-weight:500">${esc(mostRated[0])}</span><span class="bar-right">${mostRated[1].rated} songs</span></div>`:''}
+        ${highestAvg?`<div class="bar-row nc"><span class="bar-label" style="color:var(--text)">Highest Avg</span><span style="flex:1;font-size:13px;font-weight:500">${esc(highestAvg[0])}</span><span class="bar-right">${(highestAvg[1].sum/highestAvg[1].rated).toFixed(1)}★</span></div>`:''}
+        ${lowestAvg?`<div class="bar-row nc"><span class="bar-label" style="color:var(--text)">Lowest Avg</span><span style="flex:1;font-size:13px;font-weight:500">${esc(lowestAvg[0])}</span><span class="bar-right">${(lowestAvg[1].sum/lowestAvg[1].rated).toFixed(1)}★</span></div>`:''}
+      </div>
+    </div>`:''}
+
+    ${oneHitWonders.length?`
+    <div class="chart-card" style="cursor:pointer" onclick="openOneHitWonders()">
+      <div class="chart-title">🎵 One Hit Wonders — tap to see all</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div><div style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--accent2);line-height:1">${oneHitWonders.length}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">artists with 1 song rated 4.5★+</div></div>
+        <div style="font-size:13px;color:var(--muted);text-align:right;max-width:55%">
+          ${oneHitWonders.slice(0,3).map(w=>`<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px"><span style="color:var(--text);font-weight:500">${esc(w.name)}</span> <span style="color:var(--star-on)">${w.rating}★</span></div>`).join('')}
+          ${oneHitWonders.length>3?`<div style="color:var(--muted);font-size:11px">+${oneHitWonders.length-3} more…</div>`:''}
+        </div>
+      </div>
+    </div>`:''}
+
+    ${allGenres.length?`
+    <div class="chart-card">
+      <div class="collapsible-header" onclick="toggleCollapse('genres-body',this)">
+        <div class="chart-title" style="margin-bottom:0">All Genres by Track Count — tap rows to see songs</div>
+        <span class="ch-arrow">▼</span>
+      </div>
+      <div class="collapsible-body" id="genres-body">
+        <div class="bar-chart" style="margin-top:13px">
+          ${allGenres.map(({g,avg,count,ids},i)=>`
+            <div class="bar-row" onclick='openModal("${esc(g)} — ${count} songs",modalSongs(${JSON.stringify(ids)}))'>
+              <span class="bar-label">${esc(g)}</span>
+              <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/maxGC*100)}%;background:hsl(${25+i*13},70%,50%)">${count}</div></div>
+              <span class="bar-right">${avg.toFixed(1)}★</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`:''}
+
+    ${allYears.length?`
+    <div class="chart-card">
+      <div class="collapsible-header" onclick="toggleCollapse('years-body',this)">
+        <div class="chart-title" style="margin-bottom:0">All Years by Track Count — tap rows to see songs</div>
+        <span class="ch-arrow">▼</span>
+      </div>
+      <div class="collapsible-body" id="years-body">
+        <div class="bar-chart" style="margin-top:13px">
+          ${allYears.map(({y,avg,count,ids},i)=>`
+            <div class="bar-row" onclick='openModal("${y} — ${count} songs",modalSongs(${JSON.stringify(ids)}))'>
+              <span class="bar-label">${y}</span>
+              <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/maxYC*100)}%;background:hsl(${200+i*8},60%,48%)">${count}</div></div>
+              <span class="bar-right">${avg.toFixed(1)}★</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`:''}
+  `;
+}
+
+function setStatsSubtab(tab){
+  document.getElementById('statsubtab-stats').classList.toggle('active',tab==='stats');
+  document.getElementById('statsubtab-analytics').classList.toggle('active',tab==='analytics');
+  document.getElementById('statsContent').style.display=tab==='stats'?'':'none';
+  document.getElementById('analyticsContent').style.display=tab==='analytics'?'':'none';
+}
+
+// ─── ARTISTS ─────────────────────────────────────────────────────────────────
+let artistSearchQuery='';
+function onArtistSearch(){artistSearchQuery=(document.getElementById('artistSearch')?.value||'').toLowerCase();renderArtists();}
+function renderArtists(){
+  const con=document.getElementById('artistsContent');
+  if(!songs.length){con.innerHTML='<div class="empty-state"><div class="big">🎤</div><h3>No Artists</h3><p>Import songs first.</p></div>';return;}
+  const aMap={};songs.forEach(s=>{const a=primaryArtist(s.artist);if(!aMap[a])aMap[a]=[];aMap[a].push(s);});
+  let artists=Object.entries(aMap).map(([name,ss])=>{
+    const rated=ss.filter(s=>ratings[s.id]>0);
+    const score=artistScore(ss);
+    const avgR=rated.length?rated.reduce((a,s)=>a+(ratings[s.id]||0),0)/rated.length:0;
+    return{name,total:ss.length,rated:rated.length,score,avgR,ss};
+  }).filter(a=>a.rated>0).sort((a,b)=>b.score-a.score);
+  if(artistSearchQuery)artists=artists.filter(a=>a.name.toLowerCase().includes(artistSearchQuery));
+  if(!artists.length){con.innerHTML='<div class="empty-state"><div class="big">🎤</div><h3>'+(artistSearchQuery?'No matches':'No Rated Artists')+'</h3></div>';return;}
+  con.innerHTML='<div class="section-note">Score = avg pts per rated song × rated songs &nbsp;|&nbsp; 4★=1pt · 4.5★=2pt · 5★=4pt · Tap to see songs</div>'+
+    artists.map((a,i)=>'<div class="artist-card" onclick=\'openModal("'+esc(a.name)+' — '+a.total+' tracks",modalSongs('+JSON.stringify(a.ss.map(s=>s.id))+'))\'>' +
+      '<span class="artist-rank">'+(i+1)+'</span>' +
+      '<div class="artist-info"><div class="artist-name">'+esc(a.name)+'</div>' +
+      '<div class="artist-meta">'+a.total+' track'+(a.total!==1?'s':'')+' · '+a.rated+' rated · avg '+a.avgR.toFixed(1)+'★</div></div>' +
+      '<div class="artist-score-box"><div class="artist-score-val">'+a.score+'</div><div class="artist-score-lbl">score</div></div>' +
+      '</div>').join('');
+}
+
+// ─── ANALYTICS ───────────────────────────────────────────────────────────────
+function renderAnalytics(){
+  const con=document.getElementById('analyticsContent');
+  const rated=songs.filter(s=>ratings[s.id]>0);
+  if(rated.length<5){con.innerHTML='<div class="empty-state"><div class="big">🧠</div><h3>Not Enough Data</h3><p>Rate at least 5 songs.</p></div>';return;}
+  const avg=rated.reduce((a,s)=>a+(ratings[s.id]||0),0)/rated.length;
+  const fivePct=Math.round(rated.filter(s=>ratings[s.id]===5).length/rated.length*100);
+  const highPct=Math.round(rated.filter(s=>(ratings[s.id]||0)>=4).length/rated.length*100);
+  const profile=avg>=4.2?'Generous — you love most of what you listen to':avg>=3.5?'Balanced — you enjoy most tracks but are selective':avg>=2.8?'Critical — you have high standards':'Very selective — only the best makes the cut';
+  const gStats={};rated.forEach(s=>{(s.genre||'').split(/[,;]/).map(x=>x.trim()).filter(Boolean).forEach(g=>{if(!gStats[g])gStats[g]={sum:0,ids:[]};gStats[g].sum+=ratings[s.id];gStats[g].ids.push(s.id);});});
+  const favGenres=Object.entries(gStats).filter(([,v])=>v.ids.length>=2).map(([g,d])=>({g,avg:d.sum/d.ids.length,count:d.ids.length,ids:d.ids})).sort((a,b)=>b.avg-a.avg).slice(0,12);
+  const decStats={};rated.forEach(s=>{if(!s.year)return;const d=Math.floor(s.year/10)*10;if(!decStats[d])decStats[d]={sum:0,ids:[]};decStats[d].sum+=ratings[s.id];decStats[d].ids.push(s.id);});
+  const decades=Object.entries(decStats).map(([d,v])=>({d:parseInt(d),avg:v.sum/v.ids.length,count:v.ids.length,ids:v.ids})).sort((a,b)=>b.avg-a.avg);
+  const yStats={};rated.forEach(s=>{if(!s.year)return;if(!yStats[s.year])yStats[s.year]={sum:0,ids:[]};yStats[s.year].sum+=ratings[s.id];yStats[s.year].ids.push(s.id);});
+  const favYears=Object.entries(yStats).filter(([,v])=>v.ids.length>=2).map(([y,d])=>({y:parseInt(y),avg:d.sum/d.ids.length,count:d.ids.length,ids:d.ids})).sort((a,b)=>b.avg-a.avg).slice(0,10);
+  const allY=songs.filter(s=>s.year).map(s=>s.year);
+  const minY=allY.length?Math.min(...allY):null,maxY=allY.length?Math.max(...allY):null;
+  con.innerHTML=`
+    <div class="taste-section">
+      <div class="taste-title">🎭 Taste Profile</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:14px">
+        <div style="font-size:15px;font-weight:500;margin-bottom:7px">${profile}</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.9">Avg: <strong style="color:var(--star-on)">${avg.toFixed(2)}★</strong> · ${highPct}% are 4★+ · ${fivePct}% are 5★${minY&&maxY?'<br>Music spans <strong style="color:var(--text)">'+minY+'–'+maxY+'</strong>':''}</div>
+      </div>
+    </div>
+    ${favGenres.length?`<div class="taste-section"><div class="taste-title">🎸 Favorite Genres — tap to see songs</div><div class="taste-pills">${favGenres.map(({g,avg,count,ids})=>`<div class="taste-pill" onclick='openModal("${esc(g)} — ${count} songs",modalSongs(${JSON.stringify(ids)}))'><span class="tp-label">${esc(g)}</span><span class="tp-val">${avg.toFixed(1)}★ · ${count}trk</span></div>`).join('')}</div></div>`:''}
+    ${decades.length?`<div class="taste-section"><div class="taste-title">📅 Favorite Decades — tap to see songs</div><div class="decade-grid">${decades.map(({d,avg,count,ids})=>`<div class="decade-card" onclick='openModal("${d}s — ${count} songs",modalSongs(${JSON.stringify(ids)}))'><div class="decade-label">${d}s</div><div class="decade-count">${count} songs</div><div class="decade-avg">${avg.toFixed(1)}★</div></div>`).join('')}</div></div>`:''}
+    ${favYears.length?`<div class="taste-section"><div class="taste-title">📆 Best Years — tap to see songs</div><div class="bar-chart">${favYears.map(({y,avg,count,ids},i)=>`<div class="bar-row" onclick='openModal("${y} — ${count} songs",modalSongs(${JSON.stringify(ids)}))'><span class="bar-label">${y}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(avg/5*100)}%;background:hsl(${142-i*11},65%,42%)">${avg.toFixed(1)}★</div></div><span class="bar-right">${count}trk</span></div>`).join('')}</div></div>`:''}
+  `;
+}
+
+// ─── HIDDEN GEMS ──────────────────────────────────────────────────────────────
+function renderGems(){
+  const con=document.getElementById('gemsContent');
+  const aMap={};songs.forEach(s=>{const a=primaryArtist(s.artist||'Unknown');if(!aMap[a])aMap[a]=[];aMap[a].push(s);});
+  const gems=[];
+  for(const[name,ss]of Object.entries(aMap)){
+    const rated=ss.filter(s=>ratings[s.id]>0);if(rated.length<3)continue;
+    const avg=rated.reduce((a,s)=>a+ratings[s.id],0)/rated.length;
+    if(avg>3.5)continue;
+    const bangers=ss.filter(s=>(ratings[s.id]||0)>=4.5);if(!bangers.length)continue;
+    const topBanger=bangers.sort((a,b)=>(ratings[b.id]||0)-(ratings[a.id]||0))[0];
+    const gemScore=Math.round((ratings[topBanger.id]-avg)*10)/10;
+    gems.push({name,avg,rated:rated.length,total:ss.length,bangers,topBanger,gemScore,ss});
+  }
+  gems.sort((a,b)=>b.gemScore-a.gemScore);
+  if(!gems.length){con.innerHTML='<div class="empty-state"><div class="big">💎</div><h3>No Hidden Gems Yet</h3><p>A hidden gem is an artist where most songs rate 3.5★ or below but they have at least one 4.5★+ track. Rate more songs to find them.</p></div>';return;}
+  con.innerHTML='<div class="section-note">Artists with avg rating ≤3.5★ but at least one 4.5★+ track. Tap to see all their songs.</div>'+
+    gems.map((g,i)=>'<div class="artist-card" onclick=\'openModal("'+esc(g.name)+' — '+g.total+' tracks",modalSongs('+JSON.stringify(g.ss.map(s=>s.id))+'))\'>' +
+      '<span class="artist-rank">'+(i+1)+'</span>' +
+      '<div class="artist-info"><div class="artist-name">'+esc(g.name)+'</div>' +
+      '<div class="artist-meta">avg '+g.avg.toFixed(1)+'★ across '+g.rated+' rated · '+g.bangers.length+' banger'+(g.bangers.length!==1?'s':'')+'</div>' +
+      '<div class="gem-badge">💎 '+esc(g.topBanger.title)+' — '+ratings[g.topBanger.id]+'★</div></div>' +
+      '<div class="artist-score-box"><div class="artist-score-val" style="color:#a89fff">+'+g.gemScore+'</div><div class="artist-score-lbl">contrast</div></div></div>').join('');
+}
+
+// ─── DISCOVER / RECOMMENDATIONS ──────────────────────────────────────────────
+async function renderRecs(){
+  const con=document.getElementById('recsContent');
+  const seeds=songs.filter(s=>(ratings[s.id]||0)>=4.5);
+  if(seeds.length<3){con.innerHTML='<div class="empty-state"><div class="big">🔍</div><h3>Not Enough Data</h3><p>Rate at least 3 songs 4.5★ or higher to get recommendations.</p></div>';return;}
+  con.innerHTML='<div class="rec-tabs"><button class="rec-tab active" id="rectab-artists" onclick="setRecTab(\'artists\')">Artists</button><button class="rec-tab" id="rectab-tracks" onclick="setRecTab(\'tracks\')">Tracks</button><button class="rec-tab saved-tab" id="rectab-saved" onclick="setRecTab(\'saved\')">💾 Saved</button></div><div class="rec-loading"><div class="spin">🔍</div><div style="color:var(--text)">Finding recommendations…</div><div style="font-size:11px;color:var(--muted);margin-top:6px">Querying Last.fm based on all your 4.5★+ songs</div></div>';
+  const existingArtists=new Set(songs.map(s=>primaryArtist(s.artist).toLowerCase()));
+  const existingTracks=new Set(songs.map(s=>(s.title+'|||'+primaryArtist(s.artist)).toLowerCase()));
+  const simArtists={},simTracks={};
+  const batchSize=5;
+  for(let i=0;i<seeds.length;i+=batchSize){
+    const batch=seeds.slice(i,i+batchSize);
+    await Promise.all(batch.map(async s=>{
+      const artist=primaryArtist(s.artist),title=s.title,star=ratings[s.id];
+      try{
+        const ar=await fetch('https://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist='+encodeURIComponent(artist)+'&api_key='+LASTFM_KEY+'&format=json&limit=12');
+        const arD=await ar.json();
+        (arD?.similarartists?.artist||[]).forEach(a=>{
+          const k=a.name.toLowerCase();if(existingArtists.has(k))return;
+          if(!simArtists[k])simArtists[k]={name:a.name,totalMatch:0,count:0,image:'',url:a.url,basedOn:[]};
+          simArtists[k].totalMatch+=parseFloat(a.match||0)*star;simArtists[k].count++;
+          if(!simArtists[k].basedOn.includes(artist))simArtists[k].basedOn.push(artist);
+          if(!simArtists[k].image){const img=a.image?.find(i=>i.size==='medium')?.['#text']||'';if(img)simArtists[k].image=img;}
+        });
+      }catch(e){}
+      try{
+        const tr=await fetch('https://ws.audioscrobbler.com/2.0/?method=track.getsimilar&artist='+encodeURIComponent(artist)+'&track='+encodeURIComponent(title)+'&api_key='+LASTFM_KEY+'&format=json&limit=8');
+        const trD=await tr.json();
+        (trD?.similartracks?.track||[]).forEach(t=>{
+          const tA=t.artist?.name||'',k=(t.name+'|||'+tA).toLowerCase();if(existingTracks.has(k))return;
+          if(!simTracks[k])simTracks[k]={title:t.name,artist:tA,totalMatch:0,count:0,image:'',url:t.url,basedOn:[]};
+          simTracks[k].totalMatch+=parseFloat(t.match||0)*star;simTracks[k].count++;
+          if(!simTracks[k].basedOn.includes(title))simTracks[k].basedOn.push(title);
+          if(!simTracks[k].image){const img=t.image?.find(i=>i.size==='medium')?.['#text']||'';if(img)simTracks[k].image=img;}
+        });
+      }catch(e){}
+    }));
+  }
+  recAllArtists=Object.values(simArtists).map(a=>({...a,score:(a.totalMatch/seeds.length)*(1+a.count*0.3)})).sort((a,b)=>b.score-a.score);
+  recAllTracks=Object.values(simTracks).map(t=>({...t,score:(t.totalMatch/seeds.length)*(1+t.count*0.3)})).sort((a,b)=>b.score-a.score);
+  recArtistPage=0;recTrackPage=0;
+  con.innerHTML='<div class="rec-tabs"><button class="rec-tab '+(recTab==='artists'?'active':'')+'" id="rectab-artists" onclick="setRecTab(\'artists\')">Artists</button><button class="rec-tab '+(recTab==='tracks'?'active':'')+'" id="rectab-tracks" onclick="setRecTab(\'tracks\')">Tracks</button><button class="rec-tab saved-tab '+(recTab==='saved'?'active':'')+'" id="rectab-saved" onclick="setRecTab(\'saved\')">💾 Saved</button></div><div id="recResults"></div>';
+  renderRecResults();
+}
+
+function setRecTab(t){
+  recTab=t;
+  document.querySelectorAll('.rec-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('rectab-'+t)?.classList.add('active');
+  renderRecResults();
+}
+
+function renderRecResults(){
+  const con=document.getElementById('recResults');if(!con)return;
+  if(recTab==='saved'){renderSavedRecs(con);return;}
+  const isArtists=recTab==='artists';
+  const all=isArtists?recAllArtists:recAllTracks;
+  const page=isArtists?recArtistPage:recTrackPage;
+  const shown=all.slice(0,(page+1)*REC_PAGE_SIZE);
+  const hasMore=shown.length<all.length;
+  if(!shown.length){con.innerHTML='<div class="empty-state"><div class="big">🤷</div><h3>No Results</h3><p>Try rating more songs.</p></div>';return;}
+  con.innerHTML='<div style="font-size:11px;color:var(--muted);margin-bottom:12px">Based on your '+songs.filter(s=>(ratings[s.id]||0)>=4.5).length+' songs rated 4.5★+ via Last.fm · Showing '+shown.length+' of '+all.length+'</div>'+
+    shown.map((item,i)=>{
+      const key=isArtists?item.name.toLowerCase():(item.title+'|||'+item.artist).toLowerCase();
+      const isSaved=isArtists?(recSavedItems.artists[key]||false):(recSavedItems.tracks[key]||false);
+      const name=isArtists?item.name:item.title;
+      const sub=isArtists?('Recommended by '+item.count+' of your songs'):(item.artist);
+      const based='Based on: '+item.basedOn.slice(0,3).join(', ');
+      return '<div class="rec-card">' +
+        (item.image?'<img class="rec-img" src="'+item.image+'" onerror="this.style.display=\'none\'">'  :'<div class="rec-img-placeholder">'+(isArtists?'🎤':'🎵')+'</div>') +
+        '<div class="rec-info"><div class="rec-name">'+esc(name)+'</div>' +
+        (isArtists?'':'<div class="rec-sub">'+esc(sub)+'</div>') +
+        '<div class="rec-based">'+esc(isArtists?based:based)+'</div></div>' +
+        '<div class="rec-actions"><button class="rec-save-btn '+(isSaved?'saved':'')+'" onclick="toggleRecSave(\''+key+'\',\''+recTab+'\',this)" title="'+(isSaved?'Saved':'Save')+'">'+(isSaved?'✓':'＋')+'</button></div>' +
+        '</div>';
+    }).join('')+
+    (hasMore?'<button class="show-more-btn" onclick="showMoreRecs()">Show more recommendations</button>':'<div style="text-align:center;font-size:11px;color:var(--muted);padding:12px">All '+all.length+' recommendations shown</div>');
+}
+
+function showMoreRecs(){
+  if(recTab==='artists')recArtistPage++;else recTrackPage++;
+  renderRecResults();
+}
+
+function toggleRecSave(key,type,btn){
+  const bucket=type==='artists'?recSavedItems.artists:recSavedItems.tracks;
+  if(bucket[key]){delete bucket[key];btn.classList.remove('saved');btn.textContent='＋';}
+  else{
+    // Find the item data to save
+    const all=type==='artists'?recAllArtists:recAllTracks;
+    const item=all.find(i=>(type==='artists'?i.name.toLowerCase():(i.title+'|||'+i.artist).toLowerCase())===key);
+    if(item){bucket[key]=item;btn.classList.add('saved');btn.textContent='✓';}
+  }
+  save();
+}
+
+function renderSavedRecs(con){
+  const savedArtists=Object.values(recSavedItems.artists);
+  const savedTracks=Object.values(recSavedItems.tracks);
+  if(!savedArtists.length&&!savedTracks.length){
+    con.innerHTML='<div class="empty-state"><div class="big">💾</div><h3>Nothing saved yet</h3><p>Tap ＋ on any recommendation to save it here.</p></div>';return;
+  }
+  let html='';
+  if(savedArtists.length){
+    html+='<div style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;letter-spacing:2px;color:var(--accent);margin-bottom:10px;text-transform:uppercase">Saved Artists</div>';
+    html+=savedArtists.map(item=>{
+      const key=item.name.toLowerCase();
+      return '<div class="rec-card">'+(item.image?'<img class="rec-img" src="'+item.image+'" onerror="this.style.display=\'none\'">':'<div class="rec-img-placeholder">🎤</div>')+'<div class="rec-info"><div class="rec-name">'+esc(item.name)+'</div><div class="rec-based">Based on: '+esc(item.basedOn.slice(0,3).join(', '))+'</div></div><div class="rec-actions"><button class="rec-save-btn saved" onclick="toggleRecSave(\''+key+'\',\'artists\',this)">✓</button></div></div>';
+    }).join('');
+  }
+  if(savedTracks.length){
+    html+='<div style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;letter-spacing:2px;color:var(--accent);margin:16px 0 10px;text-transform:uppercase">Saved Tracks</div>';
+    html+=savedTracks.map(item=>{
+      const key=(item.title+'|||'+item.artist).toLowerCase();
+      return '<div class="rec-card">'+(item.image?'<img class="rec-img" src="'+item.image+'" onerror="this.style.display=\'none\'">':'<div class="rec-img-placeholder">🎵</div>')+'<div class="rec-info"><div class="rec-name">'+esc(item.title)+'</div><div class="rec-sub">'+esc(item.artist)+'</div><div class="rec-based">Based on: '+esc(item.basedOn.slice(0,3).join(', '))+'</div></div><div class="rec-actions"><button class="rec-save-btn saved" onclick="toggleRecSave(\''+key+'\',\'tracks\',this)">✓</button></div></div>';
+    }).join('');
+  }
+  con.innerHTML=html;
+}
+
+// ─── EXPORT ───────────────────────────────────────────────────────────────────
+function exportCSV(){
+  if(!songs.length)return showToast('No songs to export');
+  const header=['Track Name','Artist Name(s)','Album Name','Genres','Release Date','Rating'];
+  const rows=songs.map(s=>[csvCell(s.title),csvCell(s.artist),csvCell(s.album||''),csvCell(s.genre||''),csvCell(s.year?String(s.year):''),csvCell(ratings[s.id]?String(ratings[s.id]):'')]);
+  const csv=[header.map(csvCell),...rows].map(r=>r.join(',')).join('\n');
+  downloadFile('tunescope_backup.csv',csv,'text/csv');
+}
+function exportJSON(){
+  if(!songs.length)return showToast('No songs to export');
+  downloadFile('tunescope_backup.json',JSON.stringify(songs.map(s=>({...s,rating:ratings[s.id]||0})),null,2),'application/json');
+}
+function csvCell(v){const s=String(v||'');return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s;}
+function downloadFile(filename,content,mime){
+  try{const blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},2000);}catch(e){}
+  showDataModal(filename,content);
+}
+function showDataModal(filename,content){
+  const safe=content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  document.getElementById('modalTitle').textContent='📋 '+filename;
+  document.getElementById('modalBody').innerHTML='<p style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5">On Android: tap and hold the text below, Select All, Copy — then paste into Files or Notes to save.</p><textarea readonly style="width:100%;height:280px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:monospace;font-size:11px;padding:10px;resize:none;outline:none">'+safe+'</textarea><p style="font-size:11px;color:var(--muted);margin-top:8px">'+content.length+' characters · '+filename+'</p>';
+  document.getElementById('modalOverlay').style.display='flex';
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function openOneHitWonders(){openModal('One Hit Wonders ('+oneHitWonders.length+')',oneHitWonders.map(w=>w.song));}
+function toggleCollapse(id,header){const body=document.getElementById(id);if(!body)return;body.classList.toggle('open');header.classList.toggle('open');}
+function esc(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function updateSongCount(){const t=songs.length+' song'+(songs.length!==1?'s':'');const a=document.getElementById('sbCount'),b=document.getElementById('mobCount');if(a)a.textContent=t;if(b)b.textContent=t;}
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('[id^="nav-"],[id^="bnav-"]').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name)?.classList.add('active');
+  document.getElementById('nav-'+name)?.classList.add('active');
+  document.getElementById('bnav-'+name)?.classList.add('active');
+  currentPage=1;
+  if(name==='rate')renderSongList();
+  if(name==='stats'){renderStats();renderAnalytics();}
+  if(name==='artists')renderArtists();
+  if(name==='analytics')renderAnalytics();
+  if(name==='bangers')renderBangers();
+  if(name==='gems')renderGems();
+  if(name==='recs')renderRecs();
+  if(name==='add')buildAddStars();
+  window.scrollTo(0,0);
+}
+function clearAll(){if(!confirm('Delete all songs and ratings?'))return;songs=[];ratings={};recSavedItems={artists:{},tracks:{}};save();updateSongCount();showToast('Cleared');}
+let toastTimer;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3500);}
+function closeModal(e){if(!e||e.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').style.display='none';}
+function openModal(title,songArr){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=songArr.length?songArr.map(s=>'<div class="modal-song"><div class="modal-song-info"><div class="modal-song-title">'+esc(s.title)+'</div><div class="modal-song-artist">'+esc(s.artist)+(s.year?' · '+s.year:'')+'</div></div><span class="modal-song-rating">'+(ratings[s.id]?ratings[s.id]+'★':'—')+'</span></div>').join(''):'<div style="color:var(--muted);font-size:13px;padding:20px;text-align:center">No songs</div>';document.getElementById('modalOverlay').style.display='flex';}
+function modalSongs(ids){return ids.map(id=>songs.find(s=>s.id===id)).filter(Boolean).sort((a,b)=>(ratings[b.id]||0)-(ratings[a.id]||0));}
+
+initStorage();
+checkSpotifyReturn();
+</script>
+</body>
+</html>
