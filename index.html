@@ -526,7 +526,7 @@ async function initStorage() {
 // ─── SPOTIFY AUTH (Client Credentials for playlist import) ──────────────────
 async function getSpotifyToken() {
   if (spotifyToken) return spotifyToken;
-  const resp = await fetch('https://kloosaarony.github.io/Tunescope/', {
+  const resp = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': 'Basic ' + btoa(SPOTIFY_CLIENT_ID + ':' + SPOTIFY_CLIENT_SECRET) },
     body: 'grant_type=client_credentials'
@@ -538,19 +538,21 @@ async function getSpotifyToken() {
 }
 
 // For user playlists we need OAuth — use implicit flow via popup
+const SPOTIFY_REDIRECT_URI = 'https://kloosaarony.github.io/Tunescope/';
+
 function startSpotifyLogin() {
   const area = document.getElementById('spotifyImportArea');
   area.style.display = 'block';
   const status = document.getElementById('spotifyStatus');
 
-  // Build OAuth URL
-  const redirectUri = encodeURIComponent(window.location.href.split('?')[0].split('#')[0]);
+  // Build OAuth URL with hardcoded redirect URI
+  const redirectUri = encodeURIComponent(SPOTIFY_REDIRECT_URI);
   const scopes = encodeURIComponent('playlist-read-private playlist-read-collaborative');
   const state = Math.random().toString(36).slice(2);
   sessionStorage.setItem('sp_state', state);
 
-  const authUrl = 'https://kloosaarony.github.io/Tunescope/' +
-    '&client_id=' + dbd0cea91c404e3cb72013b6962682a9 +
+  const authUrl = 'https://accounts.spotify.com/authorize?response_type=token' +
+    '&client_id=' + SPOTIFY_CLIENT_ID +
     '&scope=' + scopes +
     '&redirect_uri=' + redirectUri +
     '&state=' + state;
@@ -558,7 +560,7 @@ function startSpotifyLogin() {
   // Try popup first
   const popup = window.open(authUrl, 'spotify_auth', 'width=500,height=700');
   if (!popup) {
-    // Redirect fallback (APK)
+    // Redirect fallback (mobile/APK)
     status.textContent = 'Redirecting to Spotify login…';
     sessionStorage.setItem('sp_return', 'true');
     window.location.href = authUrl;
@@ -583,16 +585,22 @@ function startSpotifyLogin() {
   }, 500);
 }
 
-// Check if we're returning from Spotify redirect (APK flow)
+// Check if we're returning from Spotify redirect (redirect flow)
+// Works both with and without the sp_return flag (covers GitHub Pages direct redirect)
 function checkSpotifyReturn() {
   const hash = window.location.hash;
-  if (hash && hash.includes('access_token') && sessionStorage.getItem('sp_return')) {
+  if (hash && hash.includes('access_token')) {
     sessionStorage.removeItem('sp_return');
     const params = new URLSearchParams(hash.slice(1));
-    spotifyToken = params.get('access_token');
-    window.location.hash = '';
+    const token = params.get('access_token');
+    if (!token) return;
+    spotifyToken = token;
+    // Clean the token from the URL without triggering a reload
+    try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) { window.location.hash = ''; }
+    // Show import area and navigate to import view
+    switchView('import');
     const area = document.getElementById('spotifyImportArea');
-    area.style.display = 'block';
+    if (area) area.style.display = 'block';
     loadSpotifyPlaylists();
   }
 }
