@@ -567,20 +567,25 @@ async function startSpotifyLogin() {
 
   status.textContent = 'Complete login in the popup…';
 
-  // Poll popup for redirect back with ?code=
-  const poll = setInterval(() => {
-    try {
-      if (popup.closed) { clearInterval(poll); status.textContent = 'Login cancelled.'; return; }
-      const url = popup.location.href;
-      if (url && url.includes('code=')) {
-        clearInterval(poll);
-        popup.close();
-        const params = new URLSearchParams(popup.location.search);
-        const code = params.get('code');
-        if (code) exchangeCodeForToken(code);
-      }
-    } catch(e) { /* cross-origin — keep polling */ }
-  }, 500);
+  // Listen for the code relayed back via postMessage from the popup
+  function onSpotifyMessage(e) {
+    if (e.origin !== window.location.origin) return;
+    if (!e.data || e.data.type !== 'spotify_callback') return;
+    window.removeEventListener('message', onSpotifyMessage);
+    clearInterval(closedPoller);
+    if (e.data.error) { status.textContent = 'Spotify error: ' + e.data.error; return; }
+    if (e.data.code) exchangeCodeForToken(e.data.code);
+  }
+  window.addEventListener('message', onSpotifyMessage);
+
+  // Watch for popup being closed without completing
+  const closedPoller = setInterval(() => {
+    if (popup.closed) {
+      clearInterval(closedPoller);
+      window.removeEventListener('message', onSpotifyMessage);
+      if (!spotifyToken) status.textContent = 'Login cancelled.';
+    }
+  }, 600);
 }
 
 async function exchangeCodeForToken(code) {
@@ -1299,8 +1304,20 @@ function closeModal(e){if(!e||e.target===document.getElementById('modalOverlay')
 function openModal(title,songArr){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=songArr.length?songArr.map(s=>'<div class="modal-song"><div class="modal-song-info"><div class="modal-song-title">'+esc(s.title)+'</div><div class="modal-song-artist">'+esc(s.artist)+(s.year?' · '+s.year:'')+'</div></div><span class="modal-song-rating">'+(ratings[s.id]?ratings[s.id]+'★':'—')+'</span></div>').join(''):'<div style="color:var(--muted);font-size:13px;padding:20px;text-align:center">No songs</div>';document.getElementById('modalOverlay').style.display='flex';}
 function modalSongs(ids){return ids.map(id=>songs.find(s=>s.id===id)).filter(Boolean).sort((a,b)=>(ratings[b.id]||0)-(ratings[a.id]||0));}
 
-initStorage();
-checkSpotifyReturn();
+// ─── SPOTIFY POPUP RELAY ─────────────────────────────────────────────────────
+// If this page loaded inside the OAuth popup, relay the code to the opener and close.
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const error = params.get('error');
+  if ((code || error) && window.opener && !window.opener.closed) {
+    window.opener.postMessage({ type: 'spotify_callback', code: code || null, error: error || null }, window.location.origin);
+    window.close();
+    return; // stop the rest of the boot
+  }
+  initStorage();
+  checkSpotifyReturn();
+})();
 </script>
 </body>
 </html>
